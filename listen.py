@@ -4,7 +4,7 @@ import time
 print('start')
 
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(7, GPIO.IN)
+GPIO.setup(15, GPIO.IN)
 
 # https://forums.raspberrypi.com/viewtopic.php?t=48592
 
@@ -13,9 +13,9 @@ try:
         start = time.time()
         stop = time.time()
 
-        while GPIO.input(7) == 0:
+        while GPIO.input(15) == 0:
             start = time.time()
-        while GPIO.input(7) == 1:
+        while GPIO.input(15) == 1:
             pass
 
         stop = time.time()
