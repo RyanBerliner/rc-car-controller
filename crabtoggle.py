@@ -30,28 +30,39 @@ class PWM_Reader:
                 pass
             stop = time.time()
             self.last_value = stop - start 
-            print(self.last_value)
 
     
 def run():
     print('start')
 
     GPIO.setmode(GPIO.BOARD)
-
-    reader1 = PWM_Reader(7)
-    reader2 = PWM_Reader(15)
     
-    time.sleep(5)
-    reader1.start_reading()
-    reader2.start_reading()
+    GPIO.setup(11, GPIO.OUT)
+    servo = GPIO.PWM(11, 50)
+    servo.start(0)
 
-    time.sleep(5)
-    reader1.stop_reading()
-    reader2.stop_reading()
+    steering_reader = PWM_Reader(7)
+    mode_reader = PWM_Reader(15)
+    
+    steering_reader.start_reading()
+    # mode_reader.start_reading()
 
-    time.sleep(5)
-    GPIO.cleanup()
-    print('stop')
+    try:
+        while True:
+            if steering_reader.last_value is None:
+                continue
+            val = steering_reader.last_value  * 1000 - 1
+            # the servo i'm testing has valid duty cycle of 5 -> 9.5
+            cycle = 4.5 * val + 5
+            print(cycle)
+            servo.ChangeDutyCycle(cycle)
+    finally:
+        steering_reader.stop_reading()
+        mode_reader.stop_reading()
+        GPIO.cleanup()
+
+        print('stopped')
+
 
 if __name__ == '__main__':
     run()
