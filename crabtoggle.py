@@ -32,7 +32,8 @@ class PWM_Reader:
             while GPIO.input(self.pin) == 1:
                 pass
             stop = time.time()
-            v.value = stop - start
+            # typically a value between 0 and 1
+            v.value = (stop - start) * 1000 - 1
 
     
 def run():
@@ -50,13 +51,17 @@ def run():
     s_val = steering_reader.start_reading()
     m_val = mode_reader.start_reading()
 
+    SERVO_DC_HIGH = 9.5
+    SERVO_DC_LOW = 5.0
+
     try:
         while True:
             if s_val() is None:
                 continue
-            val = s_val()  * 1000 - 1
-            # the servo i'm testing has valid duty cycle of 5 -> 9.5
-            cycle = 4.5 * val + 5
+            diff = SERVO_DC_HIGH - SERVO_DC_LOW
+            middle = (SERVO_DC_HIGH + SERVO_DC_LOW) / 2.0
+            val = diff * s_val() + SERVO_DC_LOW
+            cycle = val if m_val() > 0.5 else middle - val + middle
             servo.ChangeDutyCycle(cycle)
     finally:
         steering_reader.stop_reading()
