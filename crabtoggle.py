@@ -72,18 +72,21 @@ def run():
         last_cycle = (SERVO_DC_HIGH + SERVO_DC_LOW) / 2.0
 
         while True:
-            if s_val() is None:
+            sv = s_val()
+            mv = m_val()
+
+            if sv is None:
                 continue
             diff = SERVO_DC_HIGH - SERVO_DC_LOW
             middle = (SERVO_DC_HIGH + SERVO_DC_LOW) / 2.0
-            val = diff * s_val() + SERVO_DC_LOW
-            cycle = val if m_val() > 0.5 else middle - val + middle
+            val = diff * sv + SERVO_DC_LOW
+            cycle = val if mv > 0.5 else middle - val + middle
 
             # only respond to significant changes
             if abs(last_cycle - cycle) > 0.1:
                 last_cycle = cycle
                 servo.ChangeDutyCycle(cycle)
-                print('signal move %f' % (cycle,))
+                print('signal move %f in mode %i' % (cycle, 1 if mv > 0.5 else 0))
 
     finally:
         steering_reader.stop_reading()
