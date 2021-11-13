@@ -29,7 +29,7 @@ class PWM_Reader:
         self.read_process = None
 
     def read(self, v, max_update_frequency, smoothing):
-        last_ten = deque(maxlen=10)
+        previous_raw_values = deque(maxlen=20)
 
         while True:
             start = time.time()
@@ -41,8 +41,8 @@ class PWM_Reader:
             stop = time.time()
             # typically a value between 0 and 1
             val = (stop - start) * 1000 - 1
-            last_ten.append(val)
-            smoothed = mean(last_ten) if smoothing else val
+            previous_raw_values.append(val)
+            smoothed = mean(previous_raw_values) if smoothing else val
             v.value = smoothed
 
             if max_update_frequency is not None:
@@ -69,6 +69,8 @@ def run():
     SERVO_DC_LOW = 5.0
 
     try:
+        last_cycle = (SERVO_DC_HIGH + SERVO_DC_LOW) / 2.0
+
         while True:
             if s_val() is None:
                 continue
@@ -76,7 +78,13 @@ def run():
             middle = (SERVO_DC_HIGH + SERVO_DC_LOW) / 2.0
             val = diff * s_val() + SERVO_DC_LOW
             cycle = val if m_val() > 0.5 else middle - val + middle
-            servo.ChangeDutyCycle(cycle)
+
+            # only respond to significant changes
+            if abs(last_cycle - cycle) > 0.1:
+                last_cycle = cycle
+                servo.ChangeDutyCycle(cycle)
+                print('signal move %f' % (cycle,))
+
     finally:
         steering_reader.stop_reading()
         mode_reader.stop_reading()
