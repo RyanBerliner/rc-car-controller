@@ -1,12 +1,16 @@
 from multiprocessing import Process, Value
+from collections import deque
+from statistics import mean
 import RPi.GPIO as GPIO
 import time
 
+
 class PWM_Reader:
-    def __init__(self, pin, max_update_frequency=None):
+    def __init__(self, pin, max_update_frequency=None, smoothing=False):
         self.pin = pin
         self.read_process = None
         self.max_update_frequency = max_update_frequency
+        self.smoothing = smoothing
         GPIO.setup(self.pin, GPIO.IN)
 
     def start_reading(self):
@@ -15,7 +19,7 @@ class PWM_Reader:
 
         value = Value('d', 0.0)
 
-        self.read_process = Process(target=self.read, args=(value, self.max_update_frequency))
+        self.read_process = Process(target=self.read, args=(value, self.max_update_frequency, self.smoothing))
         self.read_process.start()
 
         return lambda : value.value
@@ -24,7 +28,9 @@ class PWM_Reader:
         self.read_process.terminate()
         self.read_process = None
 
-    def read(self, v, max_update_frequency):
+    def read(self, v, max_update_frequency, smoothing):
+        last_ten = deque(maxlen=10)
+
         while True:
             start = time.time()
             stop = time.time()
@@ -34,7 +40,10 @@ class PWM_Reader:
                 pass
             stop = time.time()
             # typically a value between 0 and 1
-            v.value = (stop - start) * 1000 - 1
+            val = (stop - start) * 1000 - 1
+            last_ten.append(val)
+            smoothed = mean(last_ten) if smoothing else val
+            v.value = smoothed
 
             if max_update_frequency is not None:
                 time.sleep(1.0 / max_update_frequency)
@@ -50,7 +59,7 @@ def run():
     servo = GPIO.PWM(11, 50)
     servo.start(0)
 
-    steering_reader = PWM_Reader(7)
+    steering_reader = PWM_Reader(7, smoothing=True)
     mode_reader = PWM_Reader(15, max_update_frequency=1)
 
     s_val = steering_reader.start_reading()
