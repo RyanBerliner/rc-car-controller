@@ -1,27 +1,30 @@
+from multiprocessing import Process, Value
 import RPi.GPIO as GPIO
 import time
-import threading
 
 class PWM_Reader:
     def __init__(self, pin):
         self.pin = pin
-        self.reading = False
-        self.last_value = None
+        self.read_process = None
         GPIO.setup(self.pin, GPIO.IN)
 
     def start_reading(self):
-        if (self.reading):
+        if self.read_process is not None:
             return
 
-        self.reading = True
-        read_thread = threading.Thread(target=self.read)
-        read_thread.start()
+        value = Value('d', 0.0)
+
+        self.read_process = Process(target=self.read, args=(value,))
+        self.read_process.start()
+
+        return lambda : value.value
 
     def stop_reading(self):
-        self.reading = False
+        self.read_process.terminate()
+        self.read_process = None
 
-    def read(self):
-         while(self.reading):
+    def read(self, v):
+        while True:
             start = time.time()
             stop = time.time()
             while GPIO.input(self.pin) == 0:
@@ -29,7 +32,7 @@ class PWM_Reader:
             while GPIO.input(self.pin) == 1:
                 pass
             stop = time.time()
-            self.last_value = stop - start 
+            v.value = stop - start
 
     
 def run():
@@ -43,18 +46,17 @@ def run():
 
     steering_reader = PWM_Reader(7)
     mode_reader = PWM_Reader(15)
-    
-    steering_reader.start_reading()
-    # mode_reader.start_reading()
+
+    s_val = steering_reader.start_reading()
+    m_val = mode_reader.start_reading()
 
     try:
         while True:
-            if steering_reader.last_value is None:
+            if s_val() is None:
                 continue
-            val = steering_reader.last_value  * 1000 - 1
+            val = s_val()  * 1000 - 1
             # the servo i'm testing has valid duty cycle of 5 -> 9.5
             cycle = 4.5 * val + 5
-            print(cycle)
             servo.ChangeDutyCycle(cycle)
     finally:
         steering_reader.stop_reading()
