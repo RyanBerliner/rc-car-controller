@@ -3,9 +3,10 @@ import RPi.GPIO as GPIO
 import time
 
 class PWM_Reader:
-    def __init__(self, pin):
+    def __init__(self, pin, max_update_frequency=None):
         self.pin = pin
         self.read_process = None
+        self.max_update_frequency = max_update_frequency
         GPIO.setup(self.pin, GPIO.IN)
 
     def start_reading(self):
@@ -14,7 +15,7 @@ class PWM_Reader:
 
         value = Value('d', 0.0)
 
-        self.read_process = Process(target=self.read, args=(value,))
+        self.read_process = Process(target=self.read, args=(value, self.max_update_frequency))
         self.read_process.start()
 
         return lambda : value.value
@@ -23,7 +24,7 @@ class PWM_Reader:
         self.read_process.terminate()
         self.read_process = None
 
-    def read(self, v):
+    def read(self, v, max_update_frequency):
         while True:
             start = time.time()
             stop = time.time()
@@ -34,6 +35,10 @@ class PWM_Reader:
             stop = time.time()
             # typically a value between 0 and 1
             v.value = (stop - start) * 1000 - 1
+
+            if max_update_frequency is not None:
+                time.sleep(1.0 / max_update_frequency)
+
 
     
 def run():
@@ -46,7 +51,7 @@ def run():
     servo.start(0)
 
     steering_reader = PWM_Reader(7)
-    mode_reader = PWM_Reader(15)
+    mode_reader = PWM_Reader(15, max_update_frequency=1)
 
     s_val = steering_reader.start_reading()
     m_val = mode_reader.start_reading()
