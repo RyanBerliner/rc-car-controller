@@ -53,23 +53,34 @@ class PWM_Reader:
 def run():
     print('start')
 
+    time.sleep(5)
+
     GPIO.setmode(GPIO.BOARD)
     
     GPIO.setup(11, GPIO.OUT)
     servo = GPIO.PWM(11, 50)
     servo.start(0)
 
+    SERVO_DC_HIGH = 9.5
+    SERVO_DC_LOW = 5.0
+    SERVO_DV_MID = (SERVO_DC_HIGH + SERVO_DC_LOW) / 2.0
+
+    servo.ChangeDutyCycle(SERVO_DC_LOW)
+    time.sleep(1)
+    servo.ChangeDutyCycle(SERVO_DC_HIGH)
+    time.sleep(1)
+    servo.ChangeDutyCycle(SERVO_DV_MID)
+    time.sleep(1)
+
     steering_reader = PWM_Reader(7, smoothing=True)
     mode_reader = PWM_Reader(15, max_update_frequency=1)
 
     s_val = steering_reader.start_reading()
     m_val = mode_reader.start_reading()
-
-    SERVO_DC_HIGH = 9.5
-    SERVO_DC_LOW = 5.0
+    time.sleep(1)
 
     try:
-        last_action_cycle = last_cycle = (SERVO_DC_HIGH + SERVO_DC_LOW) / 2.0
+        last_action_cycle = last_cycle = SERVO_DV_MID
         last_action = time.time()
         mode = False
 
