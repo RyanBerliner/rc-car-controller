@@ -53,7 +53,7 @@ class PWM_Reader:
 def run():
     print('start')
 
-    time.sleep(5)
+    time.sleep(10)
 
     GPIO.setmode(GPIO.BOARD)
     
@@ -99,14 +99,14 @@ def run():
             cycle_diff = abs(last_action_cycle - cycle)
 
             # only respond to significant changes
-            if  (cycle_diff > 0.1 and cycle_diff < 0.75) or mode != mv:
+            if  cycle_diff > 0.1 or mode != mv:
                 mode = mv
                 last_action_cycle = cycle
                 last_cycle = cycle
                 last_action = time.time()
                 servo.ChangeDutyCycle(cycle)
                 print('signal move %f in mode %i' % (cycle, 1 if mv else 0))
-            elif last_cycle != 0 and time.time() - last_action > 1:
+            elif last_cycle != 0 and time.time() - last_action > 0.5:
                 print('signal pause')
                 last_cycle = 0
                 servo.ChangeDutyCycle(0)
