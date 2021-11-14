@@ -88,7 +88,7 @@ def run():
             cycle_diff = abs(last_action_cycle - cycle)
 
             # only respond to significant changes
-            if  cycle_diff > 0.1 and cycle_diff < 0.75 or mode != mv:
+            if  (cycle_diff > 0.1 and cycle_diff < 0.75) or mode != mv:
                 mode = mv
                 last_action_cycle = cycle
                 last_cycle = cycle
