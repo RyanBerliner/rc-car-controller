@@ -2,7 +2,7 @@
 
 Remote control crawlers (like the g made r1 I'm using in this project) sometimes offer 4 wheel steering. From what I could find, there is no way to toggle between standard 4 wheel steering, and crab walk steering. Basically... how do you create a toggle to reverse servo direction of just the rear steering? Thats what this does. It uses the switch on a standard traxxas controller to toggle between standard and crab walk.
 
-[Watch video demo on youtube]() or [find more info on my website]().
+[Watch video demo on youtube](https://youtu.be/_udrgzlhfoo) or [find more info on my website](https://ryanberliner.com/gmade-r1-crab-walk-mod-servo-reversing).
 
 ## What are the different programs?
 
